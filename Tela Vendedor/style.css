@@ -2,35 +2,121 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-}
-
-html, body {
-    height: 100%;
-    width: 100%;
+    font-family: 'montserrat', sans-serif;
 }
 
 body {
-    display: flex;
-    justify-content: center; /* Centraliza horizontalmente */
-    align-items: center; /* Centraliza verticalmente */
+    background: linear-gradient(to right, #e2e2e2, #c9d6ff);
 }
 
 main {
+    padding: 20px;
+}
+
+header {
+    width: 100%;
+    height: 40px;
+    background: linear-gradient(to right, #066aff, #005ae0);
+    padding: 2px 0px;
+}
+
+header nav {
+    justify-content: end;
+    gap: 20px;
     display: flex;
-    gap: 10px;
-    align-items: center; /* Centraliza verticalmente o conteúdo dentro do main */
-    justify-content: center; /* Centraliza horizontalmente o conteúdo dentro do main */
+    margin: 0px 15px;
 }
 
-.cliente button, .chamada button, .Vendedor button{
-    width: 150px;
-    background-color: #005ae0;
-    height: 50px;
+header img {
+    width: 35px;
+    border-radius: 50%;
+    padding: 1px;
+    cursor: pointer;
+}
+
+nav button {
+    background-color: transparent;
+    box-sizing: border-box; /* Garante que o padding e a borda não alterem o tamanho */
+    display: flex; /* Opcional: Facilita a centralização de conteúdo interno */
     border: none;
-    border-radius: 30px;
+    align-items: center; /* Opcional: Centraliza o conteúdo verticalmente */
+    justify-content: center; /* Opcional: Centraliza o conteúdo horizontalmente */
 }
 
-i {
-    font-size: 40px;
-    color: white;
+nav i {
+    font-size: 25px;
+    color:  white;
+    cursor: pointer;
+}
+
+nav i:hover {
+    color: #c9d6ff;
+}
+
+#senha {
+    width: 230px;
+    border-radius: 20px;
+    padding: 10px 3px;
+    height: 100%;
+    background-color: white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+}
+
+#idsenha {
+    display: flex;
+    flex-direction: column;
+    margin: 10px 0;
+    gap: 10px;
+    text-align: center;
+}
+
+.botoes {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    justify-content: center;
+    margin: 10px 0px;
+}
+
+.botoes button {
+    font-weight: 600;
+    border-radius: 3px;
+    padding: 7px 15px;
+}
+
+#chamar {
+    background-color: #003688;
+    color: #fff;
+    font-size: 12px;
+    padding: 10px 45px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+#chamar:hover {
+    background-color: #0066ff;
+    transition: all .3s;
+}
+
+#Cancelar {
+    background-color: red;
+    color: #fff;
+    font-size: 12px;
+    padding: 10px 45px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+#Cancelar:hover {
+    background-color: rgb(255, 69, 44);
+    transition: all .3s;
 }
