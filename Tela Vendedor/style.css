@@ -1,0 +1,36 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    display: flex;
+    justify-content: center; /* Centraliza horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+}
+
+main {
+    display: flex;
+    gap: 10px;
+    align-items: center; /* Centraliza verticalmente o conteúdo dentro do main */
+    justify-content: center; /* Centraliza horizontalmente o conteúdo dentro do main */
+}
+
+.cliente button, .chamada button, .Vendedor button{
+    width: 150px;
+    background-color: #005ae0;
+    height: 50px;
+    border: none;
+    border-radius: 30px;
+}
+
+i {
+    font-size: 40px;
+    color: white;
+}
