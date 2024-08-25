@@ -73,7 +73,9 @@ signInForm.addEventListener('submit', (event) => {
             // Usuário autenticado com sucesso
             const user = userCredential.user;
             console.log('Usuário autenticado com sucesso:', user);
-            // Redirecionar ou realizar ações adicionais
+
+            // Redirecionar para a página do vendedor
+            window.location.href = './Tela Vendedor/index.html';
         })
         .catch((error) => {
             console.error('Erro ao fazer login:', error);
