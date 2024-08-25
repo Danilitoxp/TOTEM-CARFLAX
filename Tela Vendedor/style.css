@@ -53,9 +53,15 @@ nav i:hover {
     color: #c9d6ff;
 }
 
+#card-container {
+    display: flex;
+    gap: 10px;
+}
+
 .card {
     box-sizing: border-box;
     width: 300px;
+    gap: 20px;
     background-color: #fff; /* Cor de fundo do card */
     border-radius: 10px; /* Arredondar os cantos */
     overflow: hidden; /* Garante que o conteúdo não ultrapasse os limites do card */
@@ -69,6 +75,10 @@ nav i:hover {
 .card:hover {
     transform: translateY(-5px);
     box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 16px; /* Aumenta a sombra ao passar o mouse */
+}
+
+.card p {
+    margin: 5px 0;
 }
 
 /* Estilos do Cabeçalho da Senha */
@@ -187,7 +197,7 @@ h3 {
 }
 
 #proximo:hover {
-    background-color: #45a049; /* Cor ao passar o mouse */
+    background-color: #0056d2; /* Cor ao passar o mouse */
 }
 
 /* Estilização do ícone dentro do botão */

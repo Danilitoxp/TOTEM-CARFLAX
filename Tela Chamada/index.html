@@ -2,12 +2,13 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width='device-width', initial-scale=1.0">
-    <link rel="shortcut icon" href="/assets/img/Favicon/Favicon.png" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carflax | Senhas</title>
-
     <!-- links -->
-     <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./style.css">
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.18.0/firebase-firestore.js" type="module"></script>
 </head>
 <body>
     <main>
@@ -15,11 +16,11 @@
             <div class="conteudo">
                 <div class="senhas">
                     <span><p>Senha</p></span>
-                    <h1>AC170</h1>
+                    <h1 id="senha"></h1>
                 </div>
                 <div class="local">
                     <span><p>Local</p></span>
-                    <h1>Danilo 03</h1>
+                    <h1 id="nomeVendedor"> <span id="numero-vendedor"></span></h1>
                 </div>
             </div>
             
@@ -34,28 +35,13 @@
         </header>
 
         <footer>
-            <h3>Ultimas Chamadas</h3>
+            <h3>Últimas Chamadas</h3>
             <div class="ultimas-chamadas">
-
-
-                <div class="senha">
-                    <span>AC169</span>
-                    <p>Danilo 03</p>
-                </div>
-                <div class="senha">
-                    <span>AC169</span>
-                    <p>Danilo 03</p>
-                </div>
-                <div class="senha">
-                    <span>AC169</span>
-                    <p>Danilo 03</p>
-                </div>
-                <div class="senha">
-                    <span>AC169</span>
-                    <p>Danilo 03</p>
-                </div>
+                <!-- Cards de últimas chamadas são gerados dinamicamente pelo JavaScript -->
             </div>
         </footer>
     </main>
+
+    <script type="module" src="/Tela Chamada/script.js" defer></script>
 </body>
 </html>

@@ -119,6 +119,10 @@ footer h3 {
     height: 40px;
 }
 
+.local span {
+    background-color: transparent;
+}
+
 .senha {
     text-align: center;
     width: 500px;
@@ -129,6 +133,13 @@ footer h3 {
     justify-content: center; /* Centraliza horizontalmente */
     align-items: center; /* Centraliza verticalmente */
     text-align: center;
+}
+
+.card {
+    display: flex;
+    height: 200px;
+    margin: 10px;
+    border: 1px solid red;
 }
 
 .ultimas-chamadas {
