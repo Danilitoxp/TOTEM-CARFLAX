@@ -1,7 +1,7 @@
 // Importa os módulos Firebase
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js';
-import { getFirestore, collection, onSnapshot, doc, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js';
+import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js';
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -14,15 +14,12 @@ const firebaseConfig = {
 };
 
 // Inicializa o Firebase
-console.log('Inicializando Firebase...');
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-console.log('Firebase inicializado');
 
 // Referência à coleção de senhas
 const senhasCollection = collection(db, 'senhas');
-console.log('Referência à coleção de senhas:', senhasCollection);
 
 // Elementos da interface
 const cardContainer = document.getElementById('card-container');
@@ -32,8 +29,6 @@ const cronometros = {};
 
 // Função para criar um card de senha
 function criarCard(senha) {
-    console.log('Criando card com a senha:', senha);
-
     // Cria o card
     const card = document.createElement('div');
     card.className = 'card';
@@ -44,8 +39,8 @@ function criarCard(senha) {
         <div id="senha-${senha.id}">
             <div id="idsenha-${senha.id}">
                 <h3>${senha.id || 'Não disponível'}</h3>
-                <p>Status: ${senha.status || 'Não disponível'}</p>
-                <span><p id="tempo-${senha.id}">${formatarTempo(senha.tempoRestante) || '00:00'}</p></span>
+                <p id="status-${senha.id}">Status: ${senha.status || 'Não disponível'}</p>
+                <span><p id="tempo-${senha.id}">${formatarTempo(senha.tempo) || '00:00'}</p></span>
                 <p>Tipo: ${senha.tipo || 'Não disponível'}</p>
             </div>
         </div>
@@ -62,9 +57,8 @@ function criarCard(senha) {
     async function atualizarTempoNoFirestore(id, tempo) {
         try {
             await updateDoc(doc(db, 'senhas', id), {
-                tempoRestante: tempo // Atualiza o campo 'tempoRestante' no Firestore
+                tempo: tempo // Atualiza o campo 'tempo' no Firestore
             });
-            console.log(`Tempo atualizado no Firestore para a senha ${id}: ${tempo}`);
         } catch (error) {
             console.error('Erro ao atualizar o tempo no Firestore:', error);
         }
@@ -72,7 +66,7 @@ function criarCard(senha) {
 
     // Iniciar o cronômetro específico para a senha
     const tempoElement = card.querySelector(`#tempo-${senha.id}`);
-    let tempo = senha.tempoRestante || 0; // Usa o tempo existente ou inicia com 0
+    let tempo = senha.tempo || 0; // Usa o tempo existente ou inicia com 0
 
     // Atualiza o tempo a cada segundo
     const cronometro = setInterval(() => {
@@ -90,25 +84,24 @@ function criarCard(senha) {
 
     // Função para chamar uma nova senha
     chamarBtn.addEventListener('click', async () => {
-        console.log('Chamando a senha com ID:', senha.id);
+        const usuario = auth.currentUser;
+        const nomeVendedor = usuario ? usuario.email.split('@')[0] : 'Desconhecido'; // Nome do vendedor a partir do e-mail
 
-        // Parar o cronômetro do card atual
+        // Pausa o cronômetro do cliente
         clearInterval(cronometros[senha.id]);
         delete cronometros[senha.id];
 
-        // Obtém o nome do vendedor autenticado
-        const vendedorNome = await obterNomeVendedor();
-
         try {
+            // Atualiza o Firestore
             await updateDoc(doc(db, 'senhas', senha.id), {
-                status: 'Aguardando',
-                vendedor: vendedorNome,
-                tempoRestante: tempo, // Atualiza o tempo final quando a senha é chamada
+                status: 'Sendo atendida',
+                tempo: tempo, // Pausa o tempo no Firestore
+                vendedor: nomeVendedor // Adiciona o nome do vendedor
             });
-            console.log('Senha chamada com sucesso');
 
-            // Remover o card da interface
-            removerCard(senha.id);
+            // Atualiza o status na interface
+            const statusElement = card.querySelector(`#status-${senha.id}`);
+            statusElement.textContent = 'Status: Sendo atendida';
         } catch (error) {
             console.error('Erro ao chamar a senha:', error);
         }
@@ -116,16 +109,12 @@ function criarCard(senha) {
 
     // Função para cancelar a senha (excluir o documento)
     cancelarBtn.addEventListener('click', async () => {
-        console.log('Cancelando a senha com ID:', senha.id);
-
-        // Parar o cronômetro do card atual
+        // Pausa o cronômetro do card atual
         clearInterval(cronometros[senha.id]);
         delete cronometros[senha.id];
 
         try {
             await deleteDoc(doc(db, 'senhas', senha.id));
-            console.log('Senha excluída com sucesso');
-
             // Remover o card da interface
             removerCard(senha.id);
         } catch (error) {
@@ -151,45 +140,23 @@ function removerCard(id) {
     }
 }
 
-// Função para extrair o primeiro nome do e-mail
-function extrairPrimeiroNome(email) {
-    const nomeCompleto = email.split('@')[0];
-    return nomeCompleto.charAt(0).toUpperCase() + nomeCompleto.slice(1); // Capitaliza a primeira letra
-}
-
-// Função para obter o nome do vendedor autenticado
-async function obterNomeVendedor() {
-    return new Promise((resolve, reject) => {
-        onAuthStateChanged(auth, (usuario) => {
-            if (usuario) {
-                const email = usuario.email;
-                const primeiroNome = extrairPrimeiroNome(email);
-                resolve(primeiroNome);
-            } else {
-                reject('Nenhum usuário autenticado');
-            }
-        });
-    });
-}
-
 // Atualiza os cards ao receber as senhas da coleção
 onSnapshot(senhasCollection, (querySnapshot) => {
-    console.log('Atualizando cards com as senhas');
     // Obtém IDs dos cards atualmente exibidos
     const idsAtuais = Array.from(cardContainer.querySelectorAll('.card')).map(card => card.dataset.id);
 
     querySnapshot.forEach((doc) => {
         const senha = doc.data();
         senha.id = doc.id; // Adiciona o ID da senha ao objeto
-        console.log('Recebendo senha:', senha);
-        console.log('ID recebido:', senha.id); // Log do ID recebido
-
-        // Imprime o valor de cada campo do documento
-        console.log('Valor do campo id:', senha.id);
-        console.log('Valor do campo status:', senha.status);
 
         if (!idsAtuais.includes(senha.id)) {
             criarCard(senha);
+        } else {
+            // Atualiza o status do card existente se a senha já estiver na interface
+            const statusElement = document.querySelector(`#status-${senha.id}`);
+            if (statusElement && senha.status) {
+                statusElement.textContent = `Status: ${senha.status}`;
+            }
         }
     });
 
