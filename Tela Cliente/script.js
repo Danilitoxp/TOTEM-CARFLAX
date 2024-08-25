@@ -1,6 +1,7 @@
 // Importa os módulos necessários do Firebase
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
 import { getFirestore, doc, setDoc, getDocs, collection, updateDoc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -15,6 +16,7 @@ const firebaseConfig = {
 // Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 // Função para mostrar a tela de senha e esconder a tela de opções
 function mostrarSenhaComLoading() {
@@ -73,12 +75,16 @@ async function gerarSenha(tipo) {
             return;
         }
 
+        // Define o tempo inicial
+        const tempoInicial = 3;
+
         // Usa setDoc para definir o documento com o ID gerado
         await setDoc(doc(db, 'senhas', novaSenha), {
             id: novaSenha,
             status: 'Aguardando',
+            vendedor: '', // Deixa o campo vendedor em branco ao criar a senha
             tipo: tipo,
-            tempo: 0 // Adiciona o campo tempo inicializado como 0
+            tempo: tempoInicial // Define o tempo inicial como 3
         });
 
         console.log("Senha salva no Firestore com sucesso!");
@@ -89,7 +95,7 @@ async function gerarSenha(tipo) {
             console.error('Elemento .senha h1 não encontrado.');
         }
 
-        iniciarCronometro(novaSenha); // Inicia o cronômetro com o tempo inicial
+        iniciarCronometro(novaSenha, tempoInicial); // Passa o tempo inicial para o cronômetro
     } catch (error) {
         console.error("Erro ao salvar senha no Firestore:", error);
     } finally {
@@ -109,8 +115,8 @@ function gerarId(tipo) {
 }
 
 // Iniciar o cronômetro e atualizar o Firestore
-async function iniciarCronometro(id) {
-    let tempo = 0; // Tempo inicial
+async function iniciarCronometro(id, tempoInicial) {
+    let tempo = tempoInicial; // Tempo inicial
 
     const tempoElement = document.querySelector('.senha p'); // Atualiza para o seletor correto na tela do cliente
     if (!tempoElement) {
@@ -119,7 +125,7 @@ async function iniciarCronometro(id) {
     }
 
     const cronometro = setInterval(async () => {
-        tempo++;
+        tempo--;
         tempoElement.textContent = formatarTempo(tempo);
         console.log(`Atualizando tempo para ${formatarTempo(tempo)}`);
 
@@ -131,7 +137,7 @@ async function iniciarCronometro(id) {
         }
 
         // Exemplo: Parar após 30 segundos
-        if (tempo >= 30) {
+        if (tempo <= 0) {
             clearInterval(cronometro);
             console.log('O tempo acabou!');
         }
@@ -149,3 +155,35 @@ function formatarTempo(segundos) {
 document.getElementById('btn-comum').addEventListener('click', () => gerarSenha('Comum'));
 document.getElementById('btn-preferencial').addEventListener('click', () => gerarSenha('Preferencial'));
 document.getElementById('btn-ok').addEventListener('click', voltarOpcoes);
+
+// Função para obter o nome do vendedor autenticado
+async function obterNomeVendedor() {
+    return new Promise((resolve, reject) => {
+        onAuthStateChanged(auth, (usuario) => {
+            if (usuario) {
+                const email = usuario.email;
+                const primeiroNome = extrairPrimeiroNome(email);
+                resolve(primeiroNome);
+            } else {
+                reject('Nenhum usuário autenticado');
+            }
+        });
+    });
+}
+
+// Função para extrair o primeiro nome do e-mail
+function extrairPrimeiroNome(email) {
+    const nomeCompleto = email.split('@')[0];
+    return nomeCompleto.charAt(0).toUpperCase() + nomeCompleto.slice(1); // Capitaliza a primeira letra
+}
+
+// Atualiza o campo 'vendedor' da senha com o nome do vendedor que a chamou
+async function atualizarVendedorDaSenha(id) {
+    try {
+        const vendedorNome = await obterNomeVendedor();
+        await updateDoc(doc(db, 'senhas', id), { vendedor: vendedorNome });
+        console.log(`Campo 'vendedor' atualizado para: ${vendedorNome}`);
+    } catch (error) {
+        console.error('Erro ao atualizar o campo "vendedor" no Firestore:', error);
+    }
+}
