@@ -15,23 +15,22 @@ main {
     justify-content: center;
     flex-direction: column;
     padding: 2rem;
+    position: relative; /* Adiciona posição relativa para controle dos elementos internos */
 }
 
 /* Estilo para as Opções */
-.opcoes {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    transition: opacity 0.3s ease;
-}
-
-.senha, .loading {
+.opcoes, .senha, .loading {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 2rem;
     transition: opacity 0.3s ease;
+    position: absolute; /* Adiciona posição absoluta para sobreposição */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 /* Estilo do Título */
@@ -73,8 +72,28 @@ button:hover {
     border-radius: 0px;
 }
 
-.hidden {
-    display: none;
+/* Estilo do Loading */
+.loading {
+    display: none; /* Inicialmente oculto */
+}
+
+.spinner {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #005ae0; /* Blue */
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Estilo da Tela de Senha */
+.senha {
+    display: none; /* Inicialmente oculto */
 }
 
 .senha img {
@@ -92,26 +111,4 @@ button:hover {
 
 .senha h1 {
     font-size: 35px;
-}
-
-/* Estilo do Loading */
-.loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.spinner {
-    border: 16px solid #f3f3f3; /* Light grey */
-    border-top: 16px solid #005ae0; /* Blue */
-    border-radius: 50%;
-    width: 100px;
-    height: 100px;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
 }
