@@ -1,6 +1,6 @@
 // Importa os módulos Firebase
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js';
-import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js';
+import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js';
 
 // Configuração do Firebase
@@ -23,6 +23,7 @@ const senhasCollection = collection(db, 'senhas');
 
 // Elementos da interface
 const cardContainer = document.getElementById('card-container');
+const botaoProximo = document.getElementById('proximo');
 
 // Armazenar os cronômetros para cada senha
 const cronometros = {};
@@ -139,6 +140,62 @@ function removerCard(id) {
         delete cronometros[id];
     }
 }
+
+// Função para obter o nome do vendedor autenticado
+async function obterNomeVendedor() {
+    const usuario = auth.currentUser;
+    return usuario ? usuario.email.split('@')[0] : 'Desconhecido';
+}
+
+async function chamarProximaSenha() {
+    try {
+        // Define a consulta para obter a senha com a maior prioridade
+        const prioridadeQuery = query(
+            senhasCollection,
+            orderBy('prioridade', 'desc'), // Ordena por prioridade em ordem decrescente
+            limit(1) // Limita a 1 resultado
+        );
+
+        // Obtém os documentos que correspondem à consulta
+        const querySnapshot = await getDocs(prioridadeQuery);
+        const senhaDoc = querySnapshot.docs[0];
+        const senha = senhaDoc?.data();
+        const senhaId = senhaDoc?.id;
+
+        if (senha) {
+            // Pausa o cronômetro da senha atual
+            clearInterval(cronometros[senhaId]);
+            delete cronometros[senhaId];
+
+            // Atualiza o campo 'vendedor' e o status no Firestore
+            const nomeVendedor = await obterNomeVendedor();
+            await updateDoc(doc(db, 'senhas', senhaId), {
+                status: 'Sendo atendida',
+                vendedor: nomeVendedor
+            });
+
+            // Atualiza o status na interface
+            const card = document.querySelector(`.card[data-id="${senhaId}"]`);
+            if (card) {
+                const statusElement = card.querySelector(`#status-${senhaId}`);
+                statusElement.textContent = 'Status: Sendo atendida';
+            }
+
+            console.log(`Senha ${senhaId} chamada com sucesso.`);
+        } else {
+            console.log('Nenhuma senha disponível para chamar.');
+        }
+    } catch (error) {
+        console.error('Erro ao chamar a próxima senha:', error);
+    }
+}
+
+
+
+
+
+// Adiciona o event listener ao botão 'próximo'
+botaoProximo.addEventListener('click', chamarProximaSenha);
 
 // Atualiza os cards ao receber as senhas da coleção
 onSnapshot(senhasCollection, (querySnapshot) => {

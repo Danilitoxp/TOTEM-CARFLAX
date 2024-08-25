@@ -1,6 +1,6 @@
 // Importa os módulos necessários do Firebase
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-import { getFirestore, doc, setDoc, getDocs, collection, updateDoc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+import { getFirestore, doc, setDoc, getDocs, collection } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
 
 // Configuração do Firebase
@@ -20,20 +20,17 @@ const auth = getAuth(app);
 
 // Função para mostrar a tela de senha e esconder a tela de opções
 function mostrarSenhaComLoading() {
-    console.log("Mostrar tela de loading...");
     document.querySelector('.opcoes').style.display = 'none';
     document.querySelector('.loading').style.display = 'flex';
 
     // Use setTimeout para garantir que a transição seja visível
     setTimeout(() => {
-        console.log("Ocultar tela de loading e mostrar senha...");
         document.querySelector('.loading').style.display = 'none';
         document.querySelector('.senha').style.display = 'flex';
     }, 500); // Ajuste o tempo conforme necessário
 }
 
 function voltarOpcoes() {
-    console.log("Voltando à tela de opções...");
     document.querySelector('.senha').style.display = 'none';
     document.querySelector('.opcoes').style.display = 'flex';
 }
@@ -75,16 +72,13 @@ async function gerarSenha(tipo) {
             return;
         }
 
-        // Define o tempo inicial
-        const tempoInicial = 3;
-
         // Usa setDoc para definir o documento com o ID gerado
         await setDoc(doc(db, 'senhas', novaSenha), {
             id: novaSenha,
             status: 'Aguardando',
             vendedor: '', // Deixa o campo vendedor em branco ao criar a senha
             tipo: tipo,
-            tempo: tempoInicial // Define o tempo inicial como 3
+            prioridade: tipo === 'Preferencial' ? 2 : 1 // Define a prioridade com base no tipo
         });
 
         console.log("Senha salva no Firestore com sucesso!");
@@ -94,8 +88,6 @@ async function gerarSenha(tipo) {
         } else {
             console.error('Elemento .senha h1 não encontrado.');
         }
-
-        iniciarCronometro(novaSenha, tempoInicial); // Passa o tempo inicial para o cronômetro
     } catch (error) {
         console.error("Erro ao salvar senha no Firestore:", error);
     } finally {
@@ -112,43 +104,6 @@ function gerarId(tipo) {
     contador++;
     console.log(`ID gerado: ${prefix}${numero}`);
     return `${prefix}${numero}`;
-}
-
-// Iniciar o cronômetro e atualizar o Firestore
-async function iniciarCronometro(id, tempoInicial) {
-    let tempo = tempoInicial; // Tempo inicial
-
-    const tempoElement = document.querySelector('.senha p'); // Atualiza para o seletor correto na tela do cliente
-    if (!tempoElement) {
-        console.error('Elemento .senha p não encontrado.');
-        return;
-    }
-
-    const cronometro = setInterval(async () => {
-        tempo--;
-        tempoElement.textContent = formatarTempo(tempo);
-        console.log(`Atualizando tempo para ${formatarTempo(tempo)}`);
-
-        try {
-            await updateDoc(doc(db, 'senhas', id), { tempo: tempo });
-            console.log(`Tempo atualizado no Firestore: ${tempo}`);
-        } catch (error) {
-            console.error('Erro ao atualizar o tempo no Firestore:', error);
-        }
-
-        // Exemplo: Parar após 30 segundos
-        if (tempo <= 0) {
-            clearInterval(cronometro);
-            console.log('O tempo acabou!');
-        }
-    }, 1000);
-}
-
-// Função para formatar o tempo no formato mm:ss
-function formatarTempo(segundos) {
-    const minutos = Math.floor(segundos / 60);
-    const segundosRestantes = segundos % 60;
-    return `${String(minutos).padStart(2, '0')}:${String(segundosRestantes).padStart(2, '0')}`;
 }
 
 // Adiciona event listeners aos botões apenas uma vez
