@@ -82,7 +82,7 @@ async function atualizarInterface(senha) {
         }
     } else {
         senhaElement.textContent = '';
-        nomeVendedorElement.innerHTML = 'Não disponível <span id="numero-estacao"></span>';
+        nomeVendedorElement.innerHTML = '<span id="numero-estacao"></span>';
 
         // Log para debug
         console.log('Nenhuma senha chamada atualmente.');

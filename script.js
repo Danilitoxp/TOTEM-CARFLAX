@@ -44,9 +44,9 @@ loginBtn?.addEventListener('click', () => {
 signUpForm?.addEventListener('submit', async (event) => {
     event.preventDefault(); // Impede o envio tradicional do formulário
 
-    const name = signUpForm.querySelector('input[placeholder="Name"]')?.value;
-    const email = signUpForm.querySelector('input[placeholder="Email"]')?.value;
-    const password = signUpForm.querySelector('input[placeholder="Password"]')?.value;
+    const name = signUpForm.querySelector('input[placeholder="Nome"]')?.value;
+    const email = signUpForm.querySelector('input[placeholder="E-mail"]')?.value;
+    const password = signUpForm.querySelector('input[placeholder="Senha"]')?.value;
 
     if (!name || !email || !password) {
         alert('Todos os campos são obrigatórios.');
@@ -77,8 +77,8 @@ signUpForm?.addEventListener('submit', async (event) => {
 signInForm?.addEventListener('submit', async (event) => {
     event.preventDefault(); // Impede o envio tradicional do formulário
 
-    const email = signInForm.querySelector('input[placeholder="Email"]')?.value;
-    const password = signInForm.querySelector('input[placeholder="Password"]')?.value;
+    const email = signInForm.querySelector('input[placeholder="E-mail"]')?.value;
+    const password = signInForm.querySelector('input[placeholder="Senha"]')?.value;
 
     if (!email || !password) {
         alert('Todos os campos são obrigatórios.');

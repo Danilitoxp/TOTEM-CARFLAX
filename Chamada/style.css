@@ -108,6 +108,7 @@ footer {
     display: flex;
     font-size: 4.5rem;
     align-items: center;
+    text-transform: uppercase;
     justify-content: center;
     gap: 25px;
 }
@@ -125,8 +126,10 @@ footer {
 
 .card {
     display: flex;
+    text-transform: uppercase;
     padding-top: 3%;
     font-size: 40px;
+    font-weight: 800;
     justify-content: center;
     align-items: center;
     height: 180px;
@@ -158,5 +161,5 @@ footer {
 }
 
 .ultimas-chamadas p {
-    font-size: 30px;
+    font-size: 50px;
 }
