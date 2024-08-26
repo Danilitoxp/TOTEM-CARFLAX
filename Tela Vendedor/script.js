@@ -1,6 +1,6 @@
 // Importa os módulos Firebase
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js';
-import { getFirestore, collection, doc, updateDoc, deleteDoc, query, where, orderBy, limit, getDocs, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.18.0/firebase-firestore.js';
+import { getFirestore, collection, doc, updateDoc, deleteDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.18.0/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.18.0/firebase-auth.js';
 
 // Configuração do Firebase
@@ -23,7 +23,6 @@ const senhasCollection = collection(db, 'senhas');
 
 // Elementos da interface
 const cardContainer = document.getElementById('card-container');
-const botaoProximo = document.getElementById('proximo');
 const seletorEstacao = document.getElementById('seletorEstacao');
 
 // Armazenar os cronômetros para cada senha
@@ -41,14 +40,13 @@ function criarCard(senha) {
         <div id="senha-${senha.id}">
             <div id="idsenha-${senha.id}">
                 <h3>${senha.id || 'Não disponível'}</h3>
-                <p id="status-${senha.id}">Status: ${senha.status || 'Não disponível'}</p>
+                <p id="status-${senha.id}">${senha.status || 'Não disponível'}</p>
                 <span><p id="tempo-${senha.id}">${formatarTempo(senha.tempo) || '00:00'}</p></span>
-                <p>Tipo: ${senha.tipo || 'Não disponível'}</p>
             </div>
         </div>
         <div class="botoes">
             <button class="chamar" data-id="${senha.id}">Chamar</button>
-            <button class="cancelar" data-id="${senha.id}">Cancelar</button>
+            <button class="cancelar" data-id="${senha.id}">Finalizar</button>
         </div>
     `;
 
@@ -63,6 +61,8 @@ function criarCard(senha) {
 // Função para iniciar um cronômetro
 function iniciarCronometro(id, tempoInicial) {
     const tempoElement = document.querySelector(`#tempo-${id}`);
+    if (!tempoElement) return; // Verifica se o elemento existe
+
     let tempo = tempoInicial;
 
     const cronometro = setInterval(() => {
@@ -83,8 +83,11 @@ async function atualizarTempoNoFirestore(id, tempo) {
     }
 }
 
-// Função para formatar o tempo no formato mm:ss
 function formatarTempo(segundos) {
+    if (typeof segundos !== 'number') {
+        console.error('O parâmetro segundos deve ser um número.');
+        return '00:00';
+    }
     const minutos = Math.floor(segundos / 60);
     const segundosRestantes = segundos % 60;
     return `${String(minutos).padStart(2, '0')}:${String(segundosRestantes).padStart(2, '0')}`;
@@ -102,7 +105,7 @@ function removerCard(id) {
 
 // Função para obter a estação selecionada
 function obterEstacaoSelecionada() {
-    return seletorEstacao.value;
+    return seletorEstacao ? seletorEstacao.value : '';
 }
 
 // Função para carregar a estação salva no Firebase
@@ -137,7 +140,9 @@ async function salvarEstacaoSelecionada() {
 }
 
 // Evento de mudança no seletor de estação
-seletorEstacao.addEventListener('change', salvarEstacaoSelecionada);
+if (seletorEstacao) {
+    seletorEstacao.addEventListener('change', salvarEstacaoSelecionada);
+}
 
 // Adiciona um listener para mudanças de estado de autenticação
 onAuthStateChanged(auth, (usuario) => {
@@ -157,11 +162,15 @@ onAuthStateChanged(auth, (usuario) => {
     }
 });
 
-// Função para chamar uma senha
 async function chamarSenha(id) {
     const usuario = auth.currentUser;
     const nomeVendedor = usuario ? usuario.email.split('@')[0] : 'Desconhecido';
     const estacao = obterEstacaoSelecionada(); // Obtém a estação selecionada
+
+    // Logs para depuração
+    console.log(`Chamando senha com ID: ${id}`);
+    console.log(`Nome do vendedor: ${nomeVendedor}`);
+    console.log(`Estação selecionada: ${estacao}`);
 
     clearInterval(cronometros[id]);
     delete cronometros[id];
@@ -196,44 +205,6 @@ async function cancelarSenha(id) {
     }
 }
 
-// Função para chamar a próxima senha
-async function chamarProximaSenha() {
-    try {
-        const estacao = obterEstacaoSelecionada(); // Obtém a estação selecionada
-        const queryFiltro = estacao ? where('estacao', '==', estacao) : null;
-        const filtroQuery = query(senhasCollection, queryFiltro || orderBy('timestamp', 'desc'));
-
-        const querySnapshot = await getDocs(filtroQuery);
-        const senhaDoc = querySnapshot.docs[0];
-        const senha = senhaDoc?.data();
-        const senhaId = senhaDoc?.id;
-
-        if (senha) {
-            clearInterval(cronometros[senhaId]);
-            delete cronometros[senhaId];
-
-            const nomeVendedor = auth.currentUser ? auth.currentUser.email.split('@')[0] : 'Desconhecido';
-            await updateDoc(doc(db, 'senhas', senhaId), {
-                status: 'Sendo atendida',
-                vendedor: nomeVendedor
-            });
-
-            const card = document.querySelector(`.card[data-id="${senhaId}"]`);
-            if (card) {
-                const statusElement = card.querySelector(`#status-${senhaId}`);
-                statusElement.textContent = 'Status: Sendo atendida';
-            }
-        } else {
-            console.log('Nenhuma senha disponível para chamar.');
-        }
-    } catch (error) {
-        console.error('Erro ao chamar a próxima senha:', error);
-    }
-}
-
-// Adiciona o event listener ao botão 'próximo'
-botaoProximo.addEventListener('click', chamarProximaSenha);
-
 // Atualiza os cards ao receber as senhas da coleção
 onSnapshot(senhasCollection, (querySnapshot) => {
     const idsAtuais = Array.from(cardContainer.querySelectorAll('.card')).map(card => card.dataset.id);
@@ -251,4 +222,13 @@ onSnapshot(senhasCollection, (querySnapshot) => {
             removerCard(id);
         }
     });
+});
+
+window.chamarSenha = chamarSenha;
+document.getElementById('proximo')?.addEventListener('click', () => {
+    const card = cardContainer.querySelector('.card');
+    if (card) {
+        const id = card.dataset.id;
+        chamarSenha(id);
+    }
 });

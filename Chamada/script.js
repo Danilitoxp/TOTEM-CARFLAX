@@ -89,7 +89,22 @@ async function atualizarInterface(senha) {
     }
 }
 
+// Função para solicitar o modo de tela cheia
+function enterFullScreen() {
+    const doc = document.documentElement;
+    if (doc.requestFullscreen) {
+        doc.requestFullscreen();
+    } else if (doc.mozRequestFullScreen) { // Firefox
+        doc.mozRequestFullScreen();
+    } else if (doc.webkitRequestFullscreen) { // Chrome, Safari e Opera
+        doc.webkitRequestFullscreen();
+    } else if (doc.msRequestFullscreen) { // IE/Edge
+        doc.msRequestFullscreen();
+    }
+}
 
+// Adiciona um listener ao botão para entrar em tela cheia
+document.getElementById('fullscreenButton').addEventListener('click', enterFullScreen);
 
 // Armazena a última senha chamada para comparação
 let ultimaSenhaChamada = null;
