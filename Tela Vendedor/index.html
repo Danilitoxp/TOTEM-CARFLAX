@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="/assets/img/Favicon/Favicon.png" type="image/x-icon">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="shortcut icon" href="/assets/img/Favicon/Favicon.png" type="image/x-icon">
     <!-- Importa o SDK do Firebase via CDN -->
     <script type="module" src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js"></script>
@@ -18,27 +17,25 @@
 <body>
     <header>
         <nav>
-            <select id="seletorEstacao">
-                <option value="1">Estação 1</option>
-                <option value="2">Estação 2</option>
-                <option value="3">Estação 3</option>
-                <option value="4">Estação 4</option>
-                <option value="5">Estação 5</option>
-            </select>
+            <div id="welcome-message"></div> <!-- Adiciona esta linha -->
+            <div class="nav-item">
+                <i class='bx bx-desktop'></i>
+                <select id="seletorEstacao">
+                    <option value="1">Estação 1</option>
+                    <option value="2">Estação 2</option>
+                    <option value="3">Estação 3</option>
+                    <option value="4">Estação 4</option>
+                    <option value="5">Estação 5</option>
+                </select>
+            </div>
             <button><a href="/index.html"><i class='bx bx-log-in'></i></a></button>
-            <img id="imagemUsuario" src="" alt="">
-        <!-- Adicionando um seletor de estação -->
+            <img id="imagemUsuario" src="" alt="Imagem do usuário">
         </nav>
     </header>
     
     <main>
         <button id="proximo"><i class='bx bx-play'></i></button>
-
-
-        
-
         <div id="card-container"></div>
     </main>
-    
 </body>
 </html>

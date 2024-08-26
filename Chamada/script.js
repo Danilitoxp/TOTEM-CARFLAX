@@ -23,6 +23,7 @@ const vendedoresCollection = collection(db, 'vendedores');
 const senhaElement = document.getElementById('senha');
 const nomeVendedorElement = document.getElementById('nomeVendedor');
 const numeroEstacaoElement = document.getElementById('numero-estacao');
+const ultimasChamadasContainer = document.querySelector('.ultimas-chamadas');
 
 // Função para capitalizar a primeira letra de cada palavra
 function capitalizeFirstLetter(string) {
@@ -103,22 +104,48 @@ function enterFullScreen() {
     }
 }
 
-// Adiciona um listener ao botão para entrar em tela cheia
-document.getElementById('fullscreenButton').addEventListener('click', enterFullScreen);
+// Chama a função de tela cheia quando a página é carregada
+window.onload = function() {
+    enterFullScreen();
+}
 
 // Armazena a última senha chamada para comparação
 let ultimaSenhaChamada = null;
 
+// Função para atualizar as últimas chamadas
+function atualizarUltimasChamadas(senhas) {
+    // Limpa o container atual
+    ultimasChamadasContainer.innerHTML = '';
+
+    // Adiciona no máximo 4 senhas ao container
+    const ultimasSenhas = senhas.slice(-4);
+    ultimasSenhas.forEach((senha) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.id = senha.id;
+
+        card.innerHTML = `
+            <div class="senha">
+                <h3>${senha.vendedor || 'Não disponível'}</h3>
+                <p>${senha.id || 'Não disponível'}</p>
+            </div>
+        `;
+        ultimasChamadasContainer.appendChild(card);
+    });
+}
+
 // Escuta mudanças na coleção de senhas
 onSnapshot(senhasCollection, (querySnapshot) => {
     let senhaChamada = null;
+    const senhas = [];
 
     querySnapshot.forEach((doc) => {
         const senha = { id: doc.id, ...doc.data() };
-        
+
         if (senha.status === 'Sendo atendida') {
             senhaChamada = senha;
         }
+        senhas.push(senha);
     });
 
     // Atualiza a interface apenas se houver uma senha chamada e se for diferente da última
@@ -126,4 +153,7 @@ onSnapshot(senhasCollection, (querySnapshot) => {
         atualizarInterface(senhaChamada);
         ultimaSenhaChamada = senhaChamada;
     }
+
+    // Atualiza as últimas chamadas
+    atualizarUltimasChamadas(senhas);
 });

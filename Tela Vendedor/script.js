@@ -144,6 +144,14 @@ if (seletorEstacao) {
     seletorEstacao.addEventListener('change', salvarEstacaoSelecionada);
 }
 
+// Atualiza o texto da mensagem de boas-vindas
+function atualizarMensagemBoasVindas(nomeUsuario) {
+    const welcomeMessageElement = document.getElementById('welcome-message');
+    if (welcomeMessageElement) {
+        welcomeMessageElement.textContent = `Bem-vindo, ${nomeUsuario}`;
+    }
+}
+
 // Adiciona um listener para mudanças de estado de autenticação
 onAuthStateChanged(auth, (usuario) => {
     const imagemUsuario = document.getElementById('imagemUsuario');
@@ -154,11 +162,17 @@ onAuthStateChanged(auth, (usuario) => {
         imagemUsuario.src = `/assets/img/Usuarios/${nomeFormatado}.jpg`;
         imagemUsuario.alt = `Imagem de ${nomeFormatado}`;
 
+        // Atualizar a mensagem de boas-vindas
+        atualizarMensagemBoasVindas(nomeFormatado);
+
         // Carregar a estação salva quando o usuário está autenticado
         carregarEstacaoSalva();
     } else {
         imagemUsuario.src = `/assets/img/Usuarios/default.jpg`;
         imagemUsuario.alt = `Imagem padrão de usuário`;
+
+        // Limpar a mensagem de boas-vindas se não estiver autenticado
+        atualizarMensagemBoasVindas('Visitante');
     }
 });
 
@@ -190,7 +204,6 @@ async function chamarSenha(id) {
         console.error('Erro ao chamar a senha:', error);
     }
 }
-
 
 // Função para cancelar uma senha
 async function cancelarSenha(id) {
