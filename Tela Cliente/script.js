@@ -1,6 +1,6 @@
 // Importa os módulos necessários do Firebase
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-import { getFirestore, doc, setDoc, getDocs, collection } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+import { getFirestore, doc, setDoc, updateDoc, getDocs, collection } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
 
 // Configuração do Firebase
@@ -77,8 +77,10 @@ async function gerarSenha(tipo) {
             id: novaSenha,
             status: 'Aguardando',
             vendedor: '', // Deixa o campo vendedor em branco ao criar a senha
+            estacao: '',  // Deixa o campo estacao em branco ao criar a senha
             tipo: tipo,
-            prioridade: tipo === 'Preferencial' ? 2 : 1 // Define a prioridade com base no tipo
+            prioridade: tipo === 'Preferencial' ? 2 : 1, // Define a prioridade com base no tipo
+            tempo: 4      // Define o tempo padrão como 4
         });
 
         console.log("Senha salva no Firestore com sucesso!");
@@ -142,3 +144,46 @@ async function atualizarVendedorDaSenha(id) {
         console.error('Erro ao atualizar o campo "vendedor" no Firestore:', error);
     }
 }
+
+// Atualiza o campo 'estacao' da senha com a estação que a chamou
+async function atualizarEstacaoDaSenha(id, estacao) {
+    try {
+        await updateDoc(doc(db, 'senhas', id), { estacao: estacao });
+        console.log(`Campo 'estacao' atualizado para: ${estacao}`);
+    } catch (error) {
+        console.error('Erro ao atualizar o campo "estacao" no Firestore:', error);
+    }
+}
+
+// Função para chamar a próxima senha
+async function chamarProximaSenha() {
+    try {
+        const estacao = obterEstacaoSelecionada();
+        const querySnapshot = await getDocs(collection(db, 'senhas'));
+        const senhas = querySnapshot.docs.map(doc => doc.data()).filter(s => s.status === 'Aguardando');
+        const senha = senhas.sort((a, b) => a.prioridade - b.prioridade)[0];
+
+        if (senha) {
+            await updateDoc(doc(db, 'senhas', senha.id), { status: 'Em Atendimento' });
+            console.log(`Próxima senha: ${senha.id}`);
+            const senhaElement = document.querySelector('.senha h1');
+            if (senhaElement) {
+                senhaElement.textContent = `Sua senha: ${senha.id}`;
+            } else {
+                console.error('Elemento .senha h1 não encontrado.');
+            }
+            await atualizarEstacaoDaSenha(senha.id, estacao);
+            await atualizarVendedorDaSenha(senha.id);
+        } else {
+            console.log('Nenhuma senha aguardando.');
+        }
+    } catch (error) {
+        console.error('Erro ao chamar a próxima senha:', error);
+    }
+}
+
+// Função para obter a estação selecionada
+function obterEstacaoSelecionada() {
+    return document.querySelector('input[name="estacao"]:checked')?.value || 'Desconhecida';
+}
+

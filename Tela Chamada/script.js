@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js';
-import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.18.0/firebase-firestore.js';
+import { getFirestore, collection, onSnapshot, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.18.0/firebase-firestore.js';
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -15,36 +15,88 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Referência à coleção de senhas
+// Referências às coleções
 const senhasCollection = collection(db, 'senhas');
+const vendedoresCollection = collection(db, 'vendedores');
 
 // Elementos da interface
 const senhaElement = document.getElementById('senha');
 const nomeVendedorElement = document.getElementById('nomeVendedor');
-const ultimasChamadasContainer = document.querySelector('.ultimas-chamadas');
+const numeroEstacaoElement = document.getElementById('numero-estacao');
+
+// Função para capitalizar a primeira letra de cada palavra
+function capitalizeFirstLetter(string) {
+    return string.replace(/\b\w/g, char => char.toUpperCase());
+}
 
 // Função para atualizar a interface com a senha chamada
-function atualizarInterface(senha) {
+async function atualizarInterface(senha) {
     if (senha) {
         senhaElement.textContent = senha.id;
-        nomeVendedorElement.textContent = senha.vendedor;
+
+        // Log para debug: dados da senha chamada
+        console.log('Dados da Senha Chamda:', senha);
+
+        // Atualiza o nome do vendedor e o número da estação
+        if (senha.vendedor) {
+            try {
+                const vendedorDoc = doc(vendedoresCollection, senha.vendedor);
+                const vendedorSnapshot = await getDoc(vendedorDoc);
+                if (vendedorSnapshot.exists()) {
+                    const vendedorData = vendedorSnapshot.data();
+                    const estacao = vendedorData.estacao || '';
+
+                    // Atualiza o nome do vendedor e o número da estação
+                    nomeVendedorElement.innerHTML = `${capitalizeFirstLetter(senha.vendedor)} <span id="numero-estacao">${estacao}</span>`;
+
+                    // Log para debug
+                    console.log(`Nome do Vendedor: ${capitalizeFirstLetter(senha.vendedor)}`);
+                    console.log(`Senha: ${senha.id}`);
+                    console.log(`Estação: ${estacao}`);
+                } else {
+                    nomeVendedorElement.innerHTML = `${capitalizeFirstLetter(senha.vendedor) || 'Não disponível'} <span id="numero-estacao">${senha.estacao || 'Não disponível'}</span>`;
+
+                    // Log para debug
+                    console.log(`Nome do Vendedor: ${capitalizeFirstLetter(senha.vendedor)}`);
+                    console.log(`Senha: ${senha.id}`);
+                    console.log(`Estação: ${senha.estacao || 'Não disponível'}`);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados do vendedor:', error);
+                nomeVendedorElement.innerHTML = `${capitalizeFirstLetter(senha.vendedor) || 'Não disponível'} <span id="numero-estacao">${senha.estacao || 'Não disponível'}</span>`;
+
+                // Log para debug
+                console.log(`Nome do Vendedor: ${capitalizeFirstLetter(senha.vendedor)}`);
+                console.log(`Senha: ${senha.id}`);
+                console.log(`Estação: ${senha.estacao || 'Não disponível'}`);
+            }
+        } else {
+            // Atualiza o número da estação diretamente da coleção senhas
+            const estacao = senha.estacao || '';
+            nomeVendedorElement.innerHTML = `Não disponível <span id="numero-estacao">${estacao}</span>`;
+
+            // Log para debug
+            console.log('Nome do Vendedor: Não disponível');
+            console.log(`Senha: ${senha.id}`);
+            console.log(`Estação: ${estacao}`);
+        }
     } else {
-        senhaElement.textContent = 'Nenhuma senha disponível';
-        nomeVendedorElement.textContent = 'Nenhum vendedor';
+        senhaElement.textContent = '';
+        nomeVendedorElement.innerHTML = 'Não disponível <span id="numero-estacao"></span>';
+
+        // Log para debug
+        console.log('Nenhuma senha chamada atualmente.');
     }
 }
 
-// Função para formatar o tempo no formato mm:ss
-function formatarTempo(segundos) {
-    const minutos = Math.floor(segundos / 60);
-    const segundosRestantes = segundos % 60;
-    return `${String(minutos).padStart(2, '0')}:${String(segundosRestantes).padStart(2, '0')}`;
-}
+
+
+// Armazena a última senha chamada para comparação
+let ultimaSenhaChamada = null;
 
 // Escuta mudanças na coleção de senhas
 onSnapshot(senhasCollection, (querySnapshot) => {
     let senhaChamada = null;
-    const ultimasSenhas = [];
 
     querySnapshot.forEach((doc) => {
         const senha = { id: doc.id, ...doc.data() };
@@ -52,23 +104,11 @@ onSnapshot(senhasCollection, (querySnapshot) => {
         if (senha.status === 'Sendo atendida') {
             senhaChamada = senha;
         }
-        
-        ultimasSenhas.push(senha);
     });
 
-    // Atualiza a interface apenas se houver uma senha chamada
-    atualizarInterface(senhaChamada);
-
-    // Atualiza a lista de últimas chamadas
-    ultimasChamadasContainer.innerHTML = ''; // Limpa o conteúdo atual
-
-    ultimasSenhas.forEach(senha => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-        <p>Vendedor: ${senha.vendedor || 'Não disponível'}</p>
-        senha: ${senha.id || 'Não disponível'}
-        `;
-        ultimasChamadasContainer.appendChild(card);
-    });
+    // Atualiza a interface apenas se houver uma senha chamada e se for diferente da última
+    if (senhaChamada && JSON.stringify(senhaChamada) !== JSON.stringify(ultimaSenhaChamada)) {
+        atualizarInterface(senhaChamada);
+        ultimaSenhaChamada = senhaChamada;
+    }
 });

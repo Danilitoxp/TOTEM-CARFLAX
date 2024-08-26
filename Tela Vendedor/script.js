@@ -1,7 +1,7 @@
 // Importa os módulos Firebase
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js';
-import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js';
+import { getFirestore, collection, doc, updateDoc, deleteDoc, query, where, orderBy, limit, getDocs, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.18.0/firebase-firestore.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.18.0/firebase-auth.js';
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -24,12 +24,15 @@ const senhasCollection = collection(db, 'senhas');
 // Elementos da interface
 const cardContainer = document.getElementById('card-container');
 const botaoProximo = document.getElementById('proximo');
+const seletorEstacao = document.getElementById('seletorEstacao');
 
 // Armazenar os cronômetros para cada senha
 const cronometros = {};
 
 // Função para criar um card de senha
 function criarCard(senha) {
+    console.log('Criando card para:', senha); // Verifique se a função é chamada
+
     const card = document.createElement('div');
     card.className = 'card';
     card.dataset.id = senha.id; // Armazena o ID da senha como um atributo de dados
@@ -97,10 +100,68 @@ function removerCard(id) {
     }
 }
 
+// Função para obter a estação selecionada
+function obterEstacaoSelecionada() {
+    return seletorEstacao.value;
+}
+
+// Função para carregar a estação salva no Firebase
+async function carregarEstacaoSalva() {
+    const usuario = auth.currentUser;
+    if (!usuario) return;
+
+    const vendedorDocRef = doc(db, 'vendedores', usuario.uid);
+    const docSnap = await getDoc(vendedorDocRef);
+
+    if (docSnap.exists()) {
+        const dados = docSnap.data();
+        if (dados.estacao) {
+            seletorEstacao.value = dados.estacao;
+        }
+    }
+}
+
+// Função para salvar a estação selecionada no Firebase
+async function salvarEstacaoSelecionada() {
+    const usuario = auth.currentUser;
+    if (!usuario) return;
+
+    const vendedorDocRef = doc(db, 'vendedores', usuario.uid);
+    const estacaoSelecionada = obterEstacaoSelecionada();
+
+    try {
+        await updateDoc(vendedorDocRef, { estacao: estacaoSelecionada });
+    } catch (error) {
+        console.error('Erro ao salvar a estação no Firestore:', error);
+    }
+}
+
+// Evento de mudança no seletor de estação
+seletorEstacao.addEventListener('change', salvarEstacaoSelecionada);
+
+// Adiciona um listener para mudanças de estado de autenticação
+onAuthStateChanged(auth, (usuario) => {
+    const imagemUsuario = document.getElementById('imagemUsuario');
+
+    if (usuario) {
+        const nomeUsuario = usuario.email.split('@')[0];
+        const nomeFormatado = nomeUsuario.charAt(0).toUpperCase() + nomeUsuario.slice(1).toLowerCase();
+        imagemUsuario.src = `/assets/img/Usuarios/${nomeFormatado}.jpg`;
+        imagemUsuario.alt = `Imagem de ${nomeFormatado}`;
+
+        // Carregar a estação salva quando o usuário está autenticado
+        carregarEstacaoSalva();
+    } else {
+        imagemUsuario.src = `/assets/img/Usuarios/default.jpg`;
+        imagemUsuario.alt = `Imagem padrão de usuário`;
+    }
+});
+
 // Função para chamar uma senha
 async function chamarSenha(id) {
     const usuario = auth.currentUser;
     const nomeVendedor = usuario ? usuario.email.split('@')[0] : 'Desconhecido';
+    const estacao = obterEstacaoSelecionada(); // Obtém a estação selecionada
 
     clearInterval(cronometros[id]);
     delete cronometros[id];
@@ -108,7 +169,8 @@ async function chamarSenha(id) {
     try {
         await updateDoc(doc(db, 'senhas', id), {
             status: 'Sendo atendida',
-            vendedor: nomeVendedor
+            vendedor: nomeVendedor,
+            estacao: estacao // Adiciona a estação ao documento da senha
         });
 
         const statusElement = document.querySelector(`#status-${id}`);
@@ -119,6 +181,7 @@ async function chamarSenha(id) {
         console.error('Erro ao chamar a senha:', error);
     }
 }
+
 
 // Função para cancelar uma senha
 async function cancelarSenha(id) {
@@ -136,13 +199,11 @@ async function cancelarSenha(id) {
 // Função para chamar a próxima senha
 async function chamarProximaSenha() {
     try {
-        const prioridadeQuery = query(
-            senhasCollection,
-            orderBy('prioridade', 'desc'),
-            limit(1)
-        );
+        const estacao = obterEstacaoSelecionada(); // Obtém a estação selecionada
+        const queryFiltro = estacao ? where('estacao', '==', estacao) : null;
+        const filtroQuery = query(senhasCollection, queryFiltro || orderBy('timestamp', 'desc'));
 
-        const querySnapshot = await getDocs(prioridadeQuery);
+        const querySnapshot = await getDocs(filtroQuery);
         const senhaDoc = querySnapshot.docs[0];
         const senha = senhaDoc?.data();
         const senhaId = senhaDoc?.id;
@@ -178,22 +239,15 @@ onSnapshot(senhasCollection, (querySnapshot) => {
     const idsAtuais = Array.from(cardContainer.querySelectorAll('.card')).map(card => card.dataset.id);
 
     querySnapshot.forEach((doc) => {
-        const senha = doc.data();
-        senha.id = doc.id;
+        const senha = { id: doc.id, ...doc.data() };
 
         if (!idsAtuais.includes(senha.id)) {
             criarCard(senha);
-        } else {
-            const statusElement = document.querySelector(`#status-${senha.id}`);
-            if (statusElement && senha.status) {
-                statusElement.textContent = `Status: ${senha.status}`;
-            }
         }
     });
 
-    Array.from(cardContainer.querySelectorAll('.card')).forEach(card => {
-        const id = card.dataset.id;
-        if (!Array.from(querySnapshot.docs).some(doc => doc.id === id)) {
+    idsAtuais.forEach((id) => {
+        if (!querySnapshot.docs.some(doc => doc.id === id)) {
             removerCard(id);
         }
     });
