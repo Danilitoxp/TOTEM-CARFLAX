@@ -22,12 +22,13 @@ header {
     padding: 2px 0;
 }
 
-header nav {
+nav {
     justify-content: end;
     display: flex;
     gap: 20px;
     margin: 0 15px;
     align-items: center;
+    max-height: 40px;
 }
 
 /* Estilos do seletor de estação */
@@ -79,6 +80,7 @@ header img {
     border-radius: 50%;
     padding: 1px;
     cursor: pointer;
+    font-size: 0;
 }
 
 /* Estilos dos cards */

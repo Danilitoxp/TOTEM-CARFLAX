@@ -5,13 +5,13 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 
 // Configuração do Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSyDjmhBmT27rrpJOXan9hioKlQwcByOOevY",
-    authDomain: "atendimento-carflax.firebaseapp.com",
-    projectId: "atendimento-carflax",
-    storageBucket: "atendimento-carflax.appspot.com",
-    messagingSenderId: "903055029867",
-    appId: "1:903055029867:web:ef06b4492c4bfe98fee32e"
-};
+    apiKey: "AIzaSyDe-nIaiqlyRaI8HdNOD91e4YrMhF_GD3Q",
+    authDomain: "carflax-77065.firebaseapp.com",
+    projectId: "carflax-77065",
+    storageBucket: "carflax-77065.appspot.com",
+    messagingSenderId: "557009908515",
+    appId: "1:557009908515:web:b7814e7feded69d4461296"
+  };
 
 // Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
