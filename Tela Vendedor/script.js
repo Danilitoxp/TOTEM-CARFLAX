@@ -168,7 +168,7 @@ onAuthStateChanged(auth, (usuario) => {
         // Carregar a estação salva quando o usuário está autenticado
         carregarEstacaoSalva();
     } else {
-        imagemUsuario.src = `/assets/img/Usuarios/default.jpg`;
+        imagemUsuario.src = `/assets/img/Usuarios/Visitante.jpg`;
         imagemUsuario.alt = `Imagem padrão de usuário`;
 
         // Limpar a mensagem de boas-vindas se não estiver autenticado
